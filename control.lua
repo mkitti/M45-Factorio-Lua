@@ -1,6 +1,6 @@
 --Carl Frank Otto III
 --carlotto81@gmail.com
-local svers = "v528-12-31-2020-0652p"
+local svers = "v528-12-31-2020-0652p-yip"
 
 function dump(o)
     if type(o) == "table" then
@@ -658,7 +658,7 @@ script.on_load(
                         end
                     end
 
-                    global.offset = game.tick
+                    global.offset = (game.tick - 1)
                     local pforce = game.forces["player"]
                     if pforce then
                         pforce.clear_chart()
@@ -2643,40 +2643,76 @@ script.on_event(
 script.on_nth_tick(
     1,
     function(event)
-
         --Slowly revealing map
         if not global.offset then
-            global.offset = 0
+            global.offset = 1
         end
 
-        local radius = (game.tick - global.offset) / 60
+        if not global.rspeed then
+            global.rspeed = 15
+        end
+
+        if not global.bounce then
+            global.bounce = 5
+        end
+
+        if not global.lightmap then
+            global.lightmap = {}
+        end
+
+        --Calculate square units per second
+        local units = (game.tick - global.offset) * ((global.rspeed*global.rspeed)/60)
+
+        --Compensate for square are
+        local dims = math.sqrt(units) / 2
+        local speed = 0
+
+        if global.prevsize then
+            speed = dims - global.prevsize
+        end
+
+        global.prevsize = dims
+
+        --Offset for rectangle border
+        local border = dims + 79
 
         --Minimum size
-        if radius < 10 then
-            radius = 10
+        if dims < 10 then
+            dims = 10
         end
 
-        local border = radius + 79
+        if border < 1 then
+            border = 1
+        end
 
+        --Keep player within area
         for _, player in pairs(game.connected_players) do
             if player and player.character and player.character.valid and player.surface then
+                --Calulate damage
+                global.lightmap[player.index] = 0
+
+                if global.lightmap[player.index] > 5 then
+                    player.character.damage(1/60,player.force)
+                end
+
+                --Keep within bounds
                 local surf = player.surface
                 local pos = player.position
 
-                if pos.x > radius then
-                    pos.x = radius
+                if pos.x > dims then
+                    pos.x = (dims-global.bounce)
                     player.teleport(pos, surf)
                 end
-                if pos.x < radius * -1 then
-                    pos.x = radius * -1
+                if pos.x < dims * -1 then
+                    pos.x = (dims-global.bounce) * -1
                     player.teleport(pos, surf)
                 end
-                if pos.y > radius then
-                    pos.y = radius
+                if pos.y > dims then
+                    pos.y = (dims-global.bounce)
                     player.teleport(pos, surf)
                 end
-                if pos.y < radius * -1 then
-                    pos.y = radius * -1
+                if pos.y < dims * -1 then
+                    pos.y = (dims-global.bounce) * -1
                     player.teleport(pos, surf)
                 end
             end
@@ -2693,9 +2729,9 @@ script.on_nth_tick(
             rendering.set_left_top(global.box, {border, border * -1})
             rendering.set_right_bottom(global.box, {border * -1, border})
         end
-            
+
         if psurface and pforce then
-            pforce.chart(psurface, {lefttop = {radius, radius * -1}, rightbottom = {radius * -1, radius}})
+            pforce.chart(psurface, {lefttop = {dims, dims * -1}, rightbottom = {dims * -1, dims}})
         end
 
         if global.restrict then
