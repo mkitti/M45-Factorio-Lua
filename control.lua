@@ -1,6 +1,6 @@
 --Carl Frank Otto III
 --carlotto81@gmail.com
-local svers = "v528-12-31-2020-0652p-yip"
+local svers = "v529-1-1-2021-0333p-yip"
 
 function dump(o)
     if type(o) == "table" then
@@ -2676,7 +2676,7 @@ script.on_nth_tick(
             end
 
             if player and player.character and player.character.valid and player.surface then
-                if global.lightmap[player.index] and global.lightmap[player.index] > 5 then
+                if global.lightmap[player.index] and global.lightmap[player.index] > 0 then
                     player.character.damage(global.lightmap[player.index], game.forces["enemy"])
                 end
             end
@@ -2768,7 +2768,8 @@ script.on_nth_tick(
             rendering.set_right_bottom(global.box, {border * -1, border})
         end
 
-        if psurface and pforce then
+        --Reveal map as we go (disabed)
+        if psurface and pforce and 1 == 2 then
             pforce.chart(psurface, {lefttop = {dims, dims * -1}, rightbottom = {dims * -1, dims}})
         end
 
