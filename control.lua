@@ -2639,11 +2639,51 @@ script.on_event(
     end
 )
 
+--Darkness Damage, every 5 seconds
+script.on_nth_tick(
+    300,
+    function(event)
+        for _, player in pairs(game.connected_players) do
+            --Find lights in area
+            local parea = {{player.position.x - 15, player.position.y - 15}, {player.position.x + 15, player.position.y + 15}}
+            local light_found = player.surface.find_entities_filtered {area = parea, force = "player", type = "lamp"}
+
+            --game.print(dump(light_found))
+
+            --Calulate damage
+            local found = false
+            if light_found and light_found[1] then
+                for _, light in pairs (light_found) do
+                    if light.status ~= defines.entity_status.no_power then
+                        found = true
+                    end
+                end
+                if found then
+                    global.lightmap[player.index] = 0
+                end
+            end
+            if not found then
+                if global.lightmap[player.index] then
+                    global.lightmap[player.index] = (global.lightmap[player.index] + global.lightmap[player.index] + 1)
+                else
+                    global.lightmap[player.index] = 0
+                end
+            end
+
+            if player and player.character and player.character.valid and player.surface then
+                if global.lightmap[player.index] and global.lightmap[player.index] > 5 then
+                    player.character.damage(global.lightmap[player.index], game.forces["enemy"])
+                end
+            end
+        end
+    end
+)
+
 --Blueprint throttle countdown
 script.on_nth_tick(
     1,
     function(event)
-        --Slowly revealing map
+        --Slowly expanding map
         if not global.offset then
             global.offset = 1
         end
@@ -2661,7 +2701,7 @@ script.on_nth_tick(
         end
 
         --Calculate square units per second
-        local units = (game.tick - global.offset) * ((global.rspeed*global.rspeed)/60)
+        local units = (game.tick - global.offset) * ((global.rspeed * global.rspeed) / 60)
 
         --Compensate for square are
         local dims = math.sqrt(units) / 2
@@ -2688,31 +2728,24 @@ script.on_nth_tick(
         --Keep player within area
         for _, player in pairs(game.connected_players) do
             if player and player.character and player.character.valid and player.surface then
-                --Calulate damage
-                global.lightmap[player.index] = 0
-
-                if global.lightmap[player.index] > 5 then
-                    player.character.damage(1/60,player.force)
-                end
-
                 --Keep within bounds
                 local surf = player.surface
                 local pos = player.position
 
                 if pos.x > dims then
-                    pos.x = (dims-global.bounce)
+                    pos.x = (dims - global.bounce)
                     player.teleport(pos, surf)
                 end
                 if pos.x < dims * -1 then
-                    pos.x = (dims-global.bounce) * -1
+                    pos.x = (dims - global.bounce) * -1
                     player.teleport(pos, surf)
                 end
                 if pos.y > dims then
-                    pos.y = (dims-global.bounce)
+                    pos.y = (dims - global.bounce)
                     player.teleport(pos, surf)
                 end
                 if pos.y < dims * -1 then
-                    pos.y = (dims-global.bounce) * -1
+                    pos.y = (dims - global.bounce) * -1
                     player.teleport(pos, surf)
                 end
             end
