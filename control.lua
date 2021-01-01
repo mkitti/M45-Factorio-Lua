@@ -2617,22 +2617,30 @@ script.on_event(
 script.on_nth_tick(
     1,
     function(event)
-        local radius = game.tick / 600
+        local radius = game.tick / 300
 
         for _, player in pairs(game.connected_players) do
-            if player and player.character and player.character.valid then
-                if player.location.x > radius then
-                    player.location.x = radius
+            if player and player.character and player.character.valid and player.surface then
+                local surf = player.surface
+                local pos = player.position
+
+                if pos.x > radius then
+                    pos.x = radius
+                    player.teleport(pos, surf)
                 end
-                if player.location.x < -radius then
-                    player.location.x = -radius
+                if pos.x < radius * -1 then
+                    pos.x = radius * -1
+                    player.teleport(pos, surf)
                 end
-                if player.location.y > radius then
-                    player.location.y = radius
+                if pos.y > radius then
+                    pos.y = radius
+                    player.teleport(pos, surf)
                 end
-                if player.location.y < -radius then
-                    player.location.y = -radius
+                if pos.y < radius * -1 then
+                    pos.y = radius * -1
+                    player.teleport(pos, surf)
                 end
+
             end
         end
 
