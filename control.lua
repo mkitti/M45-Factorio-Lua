@@ -2617,6 +2617,25 @@ script.on_event(
 script.on_nth_tick(
     1,
     function(event)
+        local radius = game.tick / 600
+
+        for _, player in pairs(game.connected_players) do
+            if player and player.character and player.character.valid then
+                if player.location.x > radius then
+                    player.location.x = radius
+                end
+                if player.location.x < -radius then
+                    player.location.x = -radius
+                end
+                if player.location.y > radius then
+                    player.location.y = radius
+                end
+                if player.location.y < -radius then
+                    player.location.y = -radius
+                end
+            end
+        end
+
         if global.restrict then
             if global.blueprint_throttle then
                 --Loop through players, countdown blueprint throttle
