@@ -643,6 +643,32 @@ script.on_load(
         if (not commands.commands.server_interface) then
             --adjust run speed
             commands.add_command(
+                "startmap",
+                "resets map expand timer",
+                function(param)
+                    local player
+                    local victim
+
+                    --Admins only
+                    if param and param.player_index then
+                        player = game.players[param.player_index]
+                        if player and player.admin == false then
+                            smart_print(player, "Admins only.")
+                            return
+                        end
+                    end
+
+                    global.offset = game.tick
+                    local pforce = game.forces["player"]
+                    if pforce then
+                        pforce.clear_chart()
+                    end
+                    smart_print("done!")
+                end
+            )
+
+            --adjust run speed
+            commands.add_command(
                 "run",
                 "<float> (0 is normal speed)",
                 function(param)
@@ -2617,7 +2643,20 @@ script.on_event(
 script.on_nth_tick(
     1,
     function(event)
-        local radius = game.tick / 300
+
+        --Slowly revealing map
+        if not global.offset then
+            global.offset = 0
+        end
+
+        local radius = (game.tick - global.offset) / 60
+
+        --Minimum size
+        if radius < 10 then
+            radius = 10
+        end
+
+        local border = radius + 79
 
         for _, player in pairs(game.connected_players) do
             if player and player.character and player.character.valid and player.surface then
@@ -2640,8 +2679,23 @@ script.on_nth_tick(
                     pos.y = radius * -1
                     player.teleport(pos, surf)
                 end
-
             end
+        end
+
+        local psurface = game.surfaces["nauvis"]
+        local pforce = game.forces["player"]
+
+        if psurface and not global.box then
+            global.box = rendering.draw_rectangle {color = {0, 0, 0}, width = 5000, left_top = {border, border * -1}, right_bottom = {border * -1, border}, surface = psurface, draw_on_ground = false}
+        end
+
+        if global.box then
+            rendering.set_left_top(global.box, {border, border * -1})
+            rendering.set_right_bottom(global.box, {border * -1, border})
+        end
+            
+        if psurface and pforce then
+            pforce.chart(psurface, {lefttop = {radius, radius * -1}, rightbottom = {radius * -1, radius}})
         end
 
         if global.restrict then
