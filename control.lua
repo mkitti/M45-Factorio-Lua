@@ -2645,7 +2645,12 @@ script.on_nth_tick(
     function(event)
         for _, player in pairs(game.connected_players) do
             --Find lights in area
-            local parea = {{player.position.x - 15, player.position.y - 15}, {player.position.x + 15, player.position.y + 15}}
+
+            if not global.lightd then
+                global.lightd = 14
+            end
+
+            local parea = {{player.position.x - (global.lightd), player.position.y - (global.lightd)}, {player.position.x + (global.lightd), player.position.y + (global.lightd)}}
             local light_found = player.surface.find_entities_filtered {area = parea, force = "player", type = "lamp"}
 
             --game.print(dump(light_found))
